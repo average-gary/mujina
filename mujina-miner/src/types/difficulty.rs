@@ -285,6 +285,14 @@ mod tests {
 
         let diff = Difficulty::from_f64(0.000048);
         assert_eq!(diff.to_string(), "0.000048");
+
+        // Whole f64 values display without decimals
+        let diff = Difficulty::from_f64(42.0);
+        assert_eq!(diff.to_string(), "42");
+
+        // Fractional f64 values carry through to SI-suffixed display
+        let diff = Difficulty::from_f64(2048.5);
+        assert_eq!(diff.to_string(), "2.05K");
     }
 
     #[test]
