@@ -97,5 +97,5 @@ pub struct SourceState {
     pub url: Option<String>,
     /// Current share difficulty set by the source.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub difficulty: Option<u64>,
+    pub difficulty: Option<f64>,
 }

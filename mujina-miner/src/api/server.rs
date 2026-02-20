@@ -330,6 +330,25 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn source_difficulty_serializes_as_f64() {
+        let miner_state = MinerState {
+            sources: vec![SourceState {
+                name: "pool".into(),
+                difficulty: Some(2048.5),
+                ..Default::default()
+            }],
+            ..Default::default()
+        };
+        let fixtures = build_test_router(miner_state, vec![]);
+
+        let (status, body) = get(fixtures.router.clone(), "/api/v0/sources/pool").await;
+        assert_eq!(status, 200);
+
+        let source: SourceState = serde_json::from_str(&body).unwrap();
+        assert_eq!(source.difficulty, Some(2048.5));
+    }
+
+    #[tokio::test]
     async fn unknown_route_returns_404() {
         let fixtures = build_test_router(MinerState::default(), vec![]);
         let (status, _body) = get(fixtures.router.clone(), "/api/v0/nope").await;
