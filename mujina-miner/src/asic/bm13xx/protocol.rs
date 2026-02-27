@@ -10,7 +10,6 @@
 //! - Unify endianness handling across different frame types
 
 use bitcoin::hashes::Hash;
-use bitvec::prelude::*;
 use bytes::{Buf, BufMut, BytesMut};
 use std::{fmt, io};
 use strum::FromRepr;
@@ -926,12 +925,7 @@ pub struct JobMidstateFormat {
 
 impl Command {
     fn build_flags(typ: CommandFlagsType, broadcast: bool, cmd: CommandFlagsCmd) -> u8 {
-        let mut flags = 0u8;
-        let field = flags.view_bits_mut::<Lsb0>();
-        field[5..7].store(typ as u8);
-        field[4..5].store(broadcast as u8);
-        field[0..4].store(cmd as u8);
-        flags
+        (cmd as u8 & 0x0F) | ((broadcast as u8) << 4) | ((typ as u8) << 5)
     }
 
     fn encode(&self, dst: &mut BytesMut) {
@@ -1130,8 +1124,7 @@ pub enum Response {
 
 impl Response {
     fn decode(bytes: &mut BytesMut) -> Result<Response, ProtocolError> {
-        let type_and_crc = bytes[bytes.len() - 1].view_bits::<Lsb0>();
-        let type_repr = type_and_crc[5..].load::<u8>();
+        let type_repr = (bytes[bytes.len() - 1] >> 5) & 0x07;
 
         match ResponseType::from_repr(type_repr) {
             Some(ResponseType::ReadRegister) => {

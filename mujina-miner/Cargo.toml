@@ -14,7 +14,6 @@ async-trait = { workspace = true }
 axum = { workspace = true }
 bitcoin = { workspace = true }
 bitflags = { workspace = true }
-bitvec = { workspace = true }
 bytes = { workspace = true }
 crc_all = { workspace = true }
 futures = { workspace = true }
