@@ -12,7 +12,6 @@
 use bitcoin::hashes::Hash;
 use bytes::{Buf, BufMut, BytesMut};
 use std::{fmt, io};
-use strum::FromRepr;
 use tokio_util::codec::{Decoder, Encoder};
 
 use super::crc::{crc5, crc5_is_valid, crc16};
@@ -581,7 +580,7 @@ impl From<VersionMask> for [u8; 4] {
     }
 }
 
-#[derive(FromRepr, Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 #[repr(u8)]
 pub enum RegisterAddress {
     ChipId = 0x00,
@@ -598,6 +597,28 @@ pub enum RegisterAddress {
     VersionMask = 0xA4,
     InitControl = 0xA8,
     MiscSettings = 0xB9,
+}
+
+impl RegisterAddress {
+    pub fn from_repr(value: u8) -> Option<Self> {
+        match value {
+            x if x == Self::ChipId as u8 => Some(Self::ChipId),
+            x if x == Self::PllDivider as u8 => Some(Self::PllDivider),
+            x if x == Self::NonceRange as u8 => Some(Self::NonceRange),
+            x if x == Self::TicketMask as u8 => Some(Self::TicketMask),
+            x if x == Self::MiscControl as u8 => Some(Self::MiscControl),
+            x if x == Self::UartBaud as u8 => Some(Self::UartBaud),
+            x if x == Self::UartRelay as u8 => Some(Self::UartRelay),
+            x if x == Self::Core as u8 => Some(Self::Core),
+            x if x == Self::AnalogMux as u8 => Some(Self::AnalogMux),
+            x if x == Self::IoDriverStrength as u8 => Some(Self::IoDriverStrength),
+            x if x == Self::Pll3Parameter as u8 => Some(Self::Pll3Parameter),
+            x if x == Self::VersionMask as u8 => Some(Self::VersionMask),
+            x if x == Self::InitControl as u8 => Some(Self::InitControl),
+            x if x == Self::MiscSettings as u8 => Some(Self::MiscSettings),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -1099,11 +1120,20 @@ impl Command {
     }
 }
 
-#[derive(FromRepr)]
 #[repr(u8)]
 enum ResponseType {
     ReadRegister = 0,
     Nonce = 4,
+}
+
+impl ResponseType {
+    fn from_repr(value: u8) -> Option<Self> {
+        match value {
+            x if x == Self::ReadRegister as u8 => Some(Self::ReadRegister),
+            x if x == Self::Nonce as u8 => Some(Self::Nonce),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug)]
