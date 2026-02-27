@@ -16,7 +16,7 @@ bitcoin = { workspace = true }
 bitflags = { workspace = true }
 bytes = { workspace = true }
 crc_all = { workspace = true }
-futures = { workspace = true }
+futures-util = { workspace = true }
 hex = { workspace = true }
 hyper = { workspace = true }
 inventory = { workspace = true }

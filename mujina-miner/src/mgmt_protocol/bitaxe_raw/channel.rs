@@ -3,7 +3,7 @@
 //! This module provides a control channel abstraction that handles
 //! packet ID management and request/response correlation.
 
-use futures::SinkExt;
+use futures_util::SinkExt;
 use std::io;
 use std::sync::Arc;
 use std::time::Duration;

@@ -11,7 +11,7 @@ use std::sync::{Arc, RwLock};
 
 use async_trait::async_trait;
 use bitcoin::block::Header as BlockHeader;
-use futures::{SinkExt, sink::Sink, stream::Stream};
+use futures_util::{SinkExt, sink::Sink, stream::Stream};
 use tokio::sync::{mpsc, oneshot, watch};
 use tokio_stream::StreamExt;
 

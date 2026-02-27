@@ -32,7 +32,7 @@
 
 use super::{TransportEvent as UsbEvent, UsbDeviceInfo};
 use crate::{error::Result, tracing::prelude::*, transport::TransportEvent};
-use futures::stream::StreamExt;
+use futures_util::stream::StreamExt;
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
 
