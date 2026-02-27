@@ -2,11 +2,18 @@
 //!
 //! Provides a Rust client for the miner's HTTP API, shared by the CLI
 //! and TUI binaries.
+//!
+//! Uses a minimal HTTP/1.1 client built on `hyper-util` instead of a
+//! full-featured library like reqwest.  The API client only makes plain
+//! HTTP GET requests to localhost, so TLS, unicode normalisation, and
+//! content-encoding support are unnecessary.
 
 pub mod types;
 
 use anyhow::{Context, Result};
-use reqwest::Client as HttpClient;
+use http_body_util::{BodyExt, Empty};
+use hyper_util::client::legacy::Client as HyperClient;
+use hyper_util::rt::TokioExecutor;
 
 use types::MinerState;
 
@@ -17,25 +24,24 @@ const DEFAULT_BASE_URL: &str = "http://127.0.0.1:7785";
 
 /// HTTP client for the miner API.
 pub struct Client {
-    http: HttpClient,
+    http: HyperClient<hyper_util::client::legacy::connect::HttpConnector, Empty<bytes::Bytes>>,
     base_url: String,
 }
 
 impl Client {
     /// Create a client connecting to the default local address.
     pub fn new() -> Self {
+        let http = HyperClient::builder(TokioExecutor::new()).build_http();
         Self {
-            http: HttpClient::new(),
+            http,
             base_url: DEFAULT_BASE_URL.to_string(),
         }
     }
 
     /// Create a client connecting to a specific base URL.
     pub fn with_base_url(base_url: String) -> Self {
-        Self {
-            http: HttpClient::new(),
-            base_url,
-        }
+        let http = HyperClient::builder(TokioExecutor::new()).build_http();
+        Self { http, base_url }
     }
 
     /// Fetch the current miner state snapshot.
@@ -43,39 +49,39 @@ impl Client {
         self.get_json("miner").await
     }
 
-    /// GET a v0 API endpoint and deserialize the JSON response.
-    pub async fn get_json<T: serde::de::DeserializeOwned>(&self, path: &str) -> Result<T> {
-        let url = format!("{}/api/v0/{}", self.base_url, path);
+    /// Perform a GET request and return the response body bytes.
+    async fn get_bytes(&self, path: &str) -> Result<Vec<u8>> {
+        let uri: hyper::Uri = format!("{}/api/v0/{}", self.base_url, path)
+            .parse()
+            .context("invalid API URL")?;
         let response = self
             .http
-            .get(&url)
-            .send()
+            .get(uri)
             .await
             .context("failed to connect to miner API")?;
         let status = response.status();
         if !status.is_success() {
             anyhow::bail!("API request failed: {}", status);
         }
-        response
-            .json()
+        let body = response
+            .into_body()
+            .collect()
             .await
-            .context("failed to parse API response")
+            .context("failed to read API response")?
+            .to_bytes();
+        Ok(body.to_vec())
+    }
+
+    /// GET a v0 API endpoint and deserialize the JSON response.
+    pub async fn get_json<T: serde::de::DeserializeOwned>(&self, path: &str) -> Result<T> {
+        let bytes = self.get_bytes(path).await?;
+        serde_json::from_slice(&bytes).context("failed to parse API response")
     }
 
     /// GET a v0 API endpoint and return the raw response body.
     pub async fn get_raw(&self, path: &str) -> Result<String> {
-        let url = format!("{}/api/v0/{}", self.base_url, path);
-        let response = self
-            .http
-            .get(&url)
-            .send()
-            .await
-            .context("failed to connect to miner API")?;
-        let status = response.status();
-        if !status.is_success() {
-            anyhow::bail!("API request failed: {}", status);
-        }
-        response.text().await.context("failed to read API response")
+        let bytes = self.get_bytes(path).await?;
+        String::from_utf8(bytes).context("failed to read API response")
     }
 }
 

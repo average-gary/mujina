@@ -42,7 +42,8 @@ tracing-subscriber = { workspace = true }
 nix = { workspace = true }
 parking_lot = { workspace = true }
 regex = { workspace = true }
-reqwest = { workspace = true }
+http-body-util = { workspace = true }
+hyper-util = { workspace = true }
 rustix = { workspace = true }
 slotmap = { workspace = true }
 num-traits = { workspace = true }
