@@ -4,10 +4,30 @@
 //! module exists so we can swap the underlying library or implement our own
 //! arithmetic without changing callers.
 
-use num_traits::Float;
 use ruint::Uint;
 use ruint::aliases::U256 as Ruint256;
 use std::ops::{AddAssign, Div, Mul, Shl, SubAssign};
+
+/// Decompose an f64 into (mantissa, exponent, sign) components.
+///
+/// Returns the same values as the (unstable) `Float::integer_decode()`:
+/// - mantissa: u64 with the significant bits
+/// - exponent: i16 power-of-two exponent
+/// - sign: 1 for positive, -1 for negative
+fn integer_decode(f: f64) -> (u64, i16, i8) {
+    let bits = f.to_bits();
+    let sign: i8 = if bits >> 63 == 0 { 1 } else { -1 };
+    let mut exponent: i16 = ((bits >> 52) & 0x7ff) as i16;
+    let mantissa = if exponent == 0 {
+        // Subnormal number
+        (bits & 0x000f_ffff_ffff_ffff) << 1
+    } else {
+        // Normal number — add implicit leading 1
+        (bits & 0x000f_ffff_ffff_ffff) | 0x0010_0000_0000_0000
+    };
+    exponent -= 1023 + 52; // Bias adjustment
+    (mantissa, exponent, sign)
+}
 
 type U512 = Uint<512, 8>;
 
@@ -151,7 +171,7 @@ impl Div<f64> for U256 {
             "f64 divisor must be finite and positive, got {rhs}"
         );
 
-        let (mantissa, exponent, _sign) = rhs.integer_decode();
+        let (mantissa, exponent, _sign) = integer_decode(rhs);
         let exponent = i32::from(exponent);
 
         if exponent >= 0 {
