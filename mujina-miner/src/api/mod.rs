@@ -5,8 +5,8 @@
 //! require authentication for local access.
 
 pub mod commands;
-mod registry;
-mod server;
+pub(crate) mod registry;
+pub(crate) mod server;
 mod v0;
 
 pub use server::{ApiConfig, serve};
