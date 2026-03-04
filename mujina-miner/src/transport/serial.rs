@@ -25,10 +25,10 @@ use std::sync::atomic::{AtomicU8, AtomicU32, AtomicU64, Ordering};
 use std::task::{Context, Poll};
 use std::time::Duration;
 
-use futures::ready;
 use parking_lot::RwLock;
 use rustix::fs::{Mode, OFlags, open};
 use rustix::termios::{ControlModes, tcdrain, tcgetattr, tcsetattr};
+use std::task::ready;
 use tokio::io::unix::AsyncFd;
 use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
 

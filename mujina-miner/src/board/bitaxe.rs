@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use futures::sink::SinkExt;
+use futures_util::sink::SinkExt;
 use std::{
     pin::Pin,
     sync::Arc,
